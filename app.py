@@ -8,38 +8,30 @@ import random
 
 app = Flask(__name__)
 
-# Function to generate a readable random string
 def generate_random_string(length):
     characters = string.ascii_letters + string.digits
     return ''.join(random.choice(characters) for _ in range(length))
 
 def download_and_convert_to_mp3(video_url):
-    # Call the FB API to get video links
     fbdlapi_url = f'https://fbdlapi.instafinsta.app/get_video_links?url={video_url}'
     response = requests.get(fbdlapi_url)
     data = json.loads(response.text)
 
-    # Get the video URL
-    video_url = data['links']['Download High Quality']
+    video_url = data['links'].get('Download High Quality', data['links'].get('Download Low Quality'))
 
-    # Generate a readable random filename for the video
     random_filename = generate_random_string(12) + '.mp4'
 
-    # Download the video
     response = requests.get(video_url)
     with open(random_filename, 'wb') as file:
         file.write(response.content)
 
-    # Convert the video to MP3
     mp3_filename = random_filename.replace('.mp4', '.mp3')
     video_clip = VideoFileClip(random_filename)
     video_clip.audio.write_audiofile(mp3_filename, verbose=False)
     video_clip.close()
 
-    # Get the absolute path of the MP3 file
     mp3_path = os.path.abspath(mp3_filename)
 
-    # Delete the MP4 file
     os.remove(random_filename)
 
     return mp3_path
